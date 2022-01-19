@@ -1,173 +1,19 @@
-macro_rules! aws_sdk_macro {
+macro_rules! aws_sdk_streams_macro {
     (feature = $feature:literal, crate_name = $mod_name:ident, aws_version = $version:literal,) => {
         #[cfg(feature = $feature)]
         #[cfg_attr(docsrs, doc(cfg(feature = $feature)))]
         pub mod $mod_name {
-            #![doc = concat!("Support for [aws-sdk-dynamodb](https://docs.rs/aws-sdk-dynamodb) version ", stringify!($version))]
+            #![doc = concat!("Support for [aws-sdk-dynamodbstreams](https://docs.rs/aws-sdk-dynamodbstreams) version ", stringify!($version))]
             //!
-            //! Because [aws-sdk-dynamodb] has not yet reached version 1.0, a feature is required to
+            //! Because [aws-sdk-dynamodbstreams] has not yet reached version 1.0, a feature is required to
             //! enable support. Add the following to your dependencies.
             //!
             //! ```toml
             //! [dependencies]
             #![doc = concat!("aws-config = ", stringify!($version))]
-            #![doc = concat!("aws-sdk-dynamodb = ", stringify!($version))]
+            #![doc = concat!("aws-sdk-dynamodbstreams = ", stringify!($version))]
             #![doc = concat!("serde_dynamo = { version = \"3\", features = [", stringify!($feature), "] }")]
             //! ```
-            //!
-            //!
-            //! ## Parsing items as strongly-typed data structures.
-            //!
-            //! Items received from a [aws-sdk-dynamodb] call can be run through [`from_items`].
-            //!
-            //! ```
-            #![doc = concat!("# use ", stringify!($mod_name), "::client::Client;")]
-            //! # use serde::{Serialize, Deserialize};
-            //! # use serde_dynamo::from_items;
-            //! #
-            //! # async fn scan(client: &Client) -> Result<(), Box<dyn std::error::Error>> {
-            //! #[derive(Serialize, Deserialize)]
-            //! pub struct User {
-            //!     id: String,
-            //!     name: String,
-            //!     age: u8,
-            //! };
-            //!
-            //! // Get documents from DynamoDB
-            //! let result = client.scan().table_name("user").send().await?;
-            //!
-            //! // And deserialize them as strongly-typed data structures
-            //! if let Some(items) = result.items {
-            //!     let users: Vec<User> = from_items(items)?;
-            //!     println!("Got {} users", users.len());
-            //! }
-            //! # Ok(())
-            //! # }
-            //! ```
-            //!
-            //! Alternatively, to deserialize one item at a time, [`from_item`] can be used.
-            //!
-            //! ```
-            #![doc = concat!("# use ", stringify!($mod_name), "::client::Client;")]
-            //! # use serde::{Serialize, Deserialize};
-            //! # use serde_dynamo::from_item;
-            //! #
-            //! # async fn scan(client: &Client) -> Result<(), Box<dyn std::error::Error>> {
-            //! #[derive(Serialize, Deserialize)]
-            //! pub struct User {
-            //!     id: String,
-            //!     name: String,
-            //!     age: u8,
-            //! };
-            //!
-            //! // Get documents from DynamoDB
-            //! let result = client.scan().table_name("user").send().await?;
-            //!
-            //! // And deserialize them as strongly-typed data structures
-            //! for item in result.items.unwrap() {
-            //!     let user: User = from_item(item)?;
-            //!     println!("{} is {}", user.name, user.age);
-            //! }
-            //! # Ok(())
-            //! # }
-            //! ```
-            //!
-            //!
-            //! ## Creating items by serializing data structures
-            //!
-            //! Writing an entire data structure to DynamoDB typically involves using [`to_item`] to serialize
-            //! it.
-            //!
-            //! ```
-            #![doc = concat!("# use ", stringify!($mod_name), "::client::Client;")]
-            //! # use serde::{Serialize, Deserialize};
-            //! # use serde_dynamo::to_item;
-            //! #
-            //! # async fn put(client: &Client) -> Result<(), Box<dyn std::error::Error>> {
-            //! #[derive(Serialize, Deserialize)]
-            //! pub struct User {
-            //!     id: String,
-            //!     name: String,
-            //!     age: u8,
-            //! };
-            //!
-            //! // Create a user
-            //! let user = User {
-            //!     id: "fSsgVtal8TpP".to_string(),
-            //!     name: "Arthur Dent".to_string(),
-            //!     age: 42,
-            //! };
-            //!
-            //! // Turn it into an item that rusoto understands
-            //! let item = to_item(user)?;
-            //!
-            //! // And write it!
-            //! client.put_item().table_name("users").set_item(Some(item)).send().await?;
-            //! # Ok(())
-            //! # }
-            //! ```
-            //!
-            //!
-            //! ## Using to_attribute_value for more control
-            //!
-            //! In some circumstances, building [aws_sdk_dynamodb::model::AttributeValue]s directly is required.
-            //!
-            //! For example, when generating a key to supply to [get_item].
-            //!
-            //! ```
-            //! use serde_dynamo::to_attribute_value;
-            #![doc = concat!("# use ", stringify!($mod_name), "::client::Client;")]
-            //! # use std::collections::HashMap;
-            //! #
-            //! # async fn get(client: &Client) -> Result<(), Box<dyn std::error::Error>> {
-            //! #
-            //! # struct User { id: String };
-            //! # let user = User { id: "fSsgVtal8TpP".to_string() };
-            //!
-            //! // Create the unique key of the record in DynamoDB in a way rusoto understands
-            //! let key = HashMap::from([
-            //!     (String::from("id"), to_attribute_value(&user.id)?),
-            //! ]);
-            //!
-            //! // And get the record
-            //! client.get_item().table_name("users").set_key(Some(key)).send().await?;
-            //! # Ok(())
-            //! # }
-            //! ```
-            //!
-            //! Or when generating attribute values in a [query] call.
-            //!
-            //! ```
-            //! use serde_dynamo::to_attribute_value;
-            #![doc = concat!("# use ", stringify!($mod_name), "::client::Client;")]
-            //! # use std::collections::HashMap;
-            //! #
-            //! # async fn query(client: &Client) -> Result<(), Box<dyn std::error::Error>> {
-            //! # let user_type = "user";
-            //! # let yesterday = "1985-04-21";
-            //!
-            //! // Declare all of the expression inputs for a query call
-            //! let expression_attribute_values = HashMap::from([
-            //!     (String::from(":user_type"), to_attribute_value(user_type)?),
-            //!     (String::from(":last_login"), to_attribute_value(yesterday)?),
-            //! ]);
-            //!
-            //! client.query()
-            //!     .table_name("users")
-            //!     .index_name("by_type_and_last_login")
-            //!     .key_condition_expression("user_type = :user_type AND last_login > :last_login")
-            //!     .set_expression_attribute_values(Some(expression_attribute_values))
-            //!     .send()
-            //!     .await?;
-            //! # Ok(())
-            //! # }
-            //! ```
-            //! [aws-sdk-dynamodb]: https://docs.rs/aws-sdk-dynamodb
-            //! [get_item]: https://docs.rs/aws-sdk-dynamodb/*/aws_sdk_dynamodb/client/struct.Client.html#method.get_item
-            //! [put_item]: https://docs.rs/aws-sdk-dynamodb/*/aws_sdk_dynamodb/client/struct.Client.html#method.put_item
-            //! [query]: https://docs.rs/aws-sdk-dynamodb/*/aws_sdk_dynamodb/client/struct.Client.html#method.query
-            //! [aws_sdk_dynamodb::model::AttributeValue]: https://docs.rs/aws-sdk-dynamodb/0.4.1/aws_sdk_dynamodb/model/enum.AttributeValue.html
-
             use crate::Result;
             use ::$mod_name::model::AttributeValue;
             use std::collections::HashMap;
@@ -408,7 +254,7 @@ macro_rules! aws_sdk_macro {
             }
 
             /// A version of [`crate::to_attribute_value`] where the `Tout` generic is tied to
-            /// [`aws-sdk-dynamodb::model::AttributeValue`](AttributeValue).
+            /// [`aws-sdk-dynamodbstreams::model::AttributeValue`](AttributeValue).
             ///
             /// Useful in very generic code where the type checker can't determine the type of
             /// `Tout`.
@@ -420,7 +266,7 @@ macro_rules! aws_sdk_macro {
             }
 
             /// A version of [`crate::to_item`] where the `Tout` generic is tied to
-            /// [`aws-sdk-dynamodb::model::AttributeValue`](AttributeValue).
+            /// [`aws-sdk-dynamodbstreams::model::AttributeValue`](AttributeValue).
             ///
             /// Useful in very generic code where the type checker can't determine the type of
             /// `Tout`.
@@ -432,7 +278,7 @@ macro_rules! aws_sdk_macro {
             }
 
             /// A version of [`crate::from_attribute_value`] where the `Tin` generic is tied to
-            /// [`aws-sdk-dynamodb::model::AttributeValue`](AttributeValue).
+            /// [`aws-sdk-dynamodbstreams::model::AttributeValue`](AttributeValue).
             ///
             /// Useful in very generic code where the type checker can't determine the type of
             /// `Tin`.
@@ -444,7 +290,7 @@ macro_rules! aws_sdk_macro {
             }
 
             /// A version of [`crate::from_item`] where the `Tin` generic is tied to
-            /// [`aws-sdk-dynamodb::model::AttributeValue`](AttributeValue).
+            /// [`aws-sdk-dynamodbstreams::model::AttributeValue`](AttributeValue).
             ///
             /// Useful in very generic code where the type checker can't determine the type of
             /// `Tin`.
@@ -458,7 +304,7 @@ macro_rules! aws_sdk_macro {
             }
 
             /// A version of [`crate::from_items`] where the `Tin` generic is tied to
-            /// [`aws-sdk-dynamodb::model::AttributeValue`](AttributeValue).
+            /// [`aws-sdk-dynamodbstreams::model::AttributeValue`](AttributeValue).
             ///
             /// Useful in very generic code where the type checker can't determine the type of
             /// `Tin`.
@@ -474,4 +320,4 @@ macro_rules! aws_sdk_macro {
     };
 }
 
-pub(crate) use aws_sdk_macro;
+pub(crate) use aws_sdk_streams_macro;

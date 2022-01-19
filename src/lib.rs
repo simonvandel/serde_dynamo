@@ -215,7 +215,7 @@ mod test_attribute_value;
 pub use attribute_value::AttributeValue;
 pub use de::{from_attribute_value, from_item, from_items, Deserializer};
 pub use error::{Error, Result};
-use macros::{aws_sdk_macro, rusoto_macro, rusoto_streams_macro};
+use macros::{aws_sdk_macro, aws_sdk_streams_macro, rusoto_macro, rusoto_streams_macro};
 pub use ser::{to_attribute_value, to_item, Serializer};
 pub use test_attribute_value::TestAttributeValue;
 
@@ -240,6 +240,12 @@ aws_sdk_macro!(
 aws_sdk_macro!(
     feature = "aws-sdk-dynamodb+0_4",
     crate_name = aws_sdk_dynamodb_0_4,
+    aws_version = "0.4",
+);
+
+aws_sdk_streams_macro!(
+    feature = "aws-sdk-dynamodbstreams+0_4",
+    crate_name = aws_sdk_dynamodbstreams_0_4,
     aws_version = "0.4",
 );
 
